@@ -1,0 +1,82 @@
+﻿@page "/nhlschedule"
+
+<h3>NHL Schedule</h3>
+<h4>@Feedback</h4>
+<h5>@url</h5>
+<div class="col col-sm form-group row">
+    <label class="col-form-label">Start Date</label>
+    <input class="form-control" type="date" @bind-value="@StartDate" />
+</div>
+<div class="col col-sm form-group row">
+    <label class="col-form-label">End Date</label>
+    <input class="form-control" type="date" @bind-value="@EndDate" />
+</div>
+<button class="btn btn-primary" @onclick="SubmitClicked">View Schedule</button>
+
+@if (schedule != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Away</th>
+                <th>Home</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>         
+
+                    @foreach (var day in schedule.Dates)
+                    {
+                        foreach (var game in day.games)
+                        {
+                            <tr>
+                                <td>@game.gameDate.ToShortDateString()</td>
+                                <td>
+                                    @game.teams.away.team.name
+                                    (@game.teams.away.leagueRecord.wins-@game.teams.away.leagueRecord.losses-@game.teams.away.leagueRecord.ot)
+                                </td>
+                                <td>
+                                    @game.teams.home.team.name
+                                    (@game.teams.home.leagueRecord.wins-@game.teams.home.leagueRecord.losses-@game.teams.home.leagueRecord.ot)
+                                </td>
+                                
+                                <td>@game.teams.home.score - @game.teams.away.score</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+    </table>
+}
+
+
+@code {
+    DateTime StartDate = System.DateTime.Now;
+    DateTime EndDate = System.DateTime.Now;
+    string Feedback = "";
+    string url;
+    public NHLSchedule schedule;
+
+    private async void SubmitClicked()
+
+    {
+        url = "https://statsapi.web.nhl.com/api/v1/schedule?startDate=" + StartDate.ToShortDateString() + "&endDate=" + EndDate.ToShortDateString();
+
+        try
+        {
+
+            HttpClient clnt = new HttpClient();
+
+            //schedule = new NHLSchedule();
+            schedule = await clnt.GetFromJsonAsync<NHLSchedule>(url);
+
+        }
+        catch (Exception ex)
+        {
+            Feedback = ex.Message;
+
+        }
+        StateHasChanged();
+    }
+
+}
